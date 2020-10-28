@@ -73,7 +73,7 @@ function loadTasks() {
 function storeTaskInLS(task) {
   const tasks = getTasks();
 
-  tasks.push({ task, done: false });
+  tasks.unshift({ task, done: false });
   localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
