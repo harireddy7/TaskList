@@ -11,6 +11,7 @@ let dragStartIndex;
 function loadAllEventListeners() {
   document.addEventListener('DOMContentLoaded', loadTasks);
   form.addEventListener('submit', addTask);
+  taskList.addEventListener('click', toggleTaskStatus);
   taskList.addEventListener('click', deleteTask);
   clearBtn.addEventListener('click', clearTask);
   filter.addEventListener('keyup', filterTask);
@@ -42,16 +43,30 @@ function loadTasks() {
 
   taskCount.textContent = `${tasks.length}`;
 
-  tasks.forEach(task => {
+  tasks.forEach(taskObj => {
     // create Task Li Element
     const li = document.createElement('li');
-    li.className = 'collection-item draggable';
+    li.className = 'collection-item draggable flex';
     li.setAttribute('draggable', 'true');
 
-    li.appendChild(document.createTextNode(task));
+    const textNodeEl = document.createElement('div');
+    textNodeEl.className = `text-task ${taskObj.done && 'strike'}`;
+    textNodeEl.innerText = taskObj.task;
+    li.appendChild(textNodeEl);
+
+    // toggle complete checkbox
+    const checkContainer = document.createElement('label');
+    checkContainer.className = 'secondary-content task-check-box';
+    checkContainer.innerHTML = `
+      <input type="checkbox" class="filled-in" />
+      <span></span>
+    `;
+    checkContainer.firstElementChild.checked = taskObj.done;
+
+    li.appendChild(checkContainer);
 
     // Add Delete Icon
-    const iconLink = document.createElement('a');
+    const iconLink = document.createElement('div');
     iconLink.className = 'delete-item secondary-content btn-floating waves-effect waves-light red';
     iconLink.style.width = '20px';
     iconLink.style.height = '20px';
@@ -69,7 +84,7 @@ function loadTasks() {
 function storeTaskInLS(task) {
   const tasks = getTasks();
 
-  tasks.push(task);
+  tasks.push({ task, done: false });
   localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
@@ -79,14 +94,26 @@ function addTask(e) {
   } else {
     // create Task Li Element
     const li = document.createElement('li');
-    li.className = 'collection-item draggable';
-
+    li.className = 'collection-item draggable flex';
     li.setAttribute('draggable', true);
 
-    li.appendChild(document.createTextNode(taskInput.value));
+    const textNodeEl = document.createElement('div');
+    textNodeEl.className = 'text-task';
+    textNodeEl.innerText = taskInput.value.trim();
+    li.appendChild(textNodeEl);
+
+    // toggle complete checkbox
+    const checkContainer = document.createElement('label');
+    checkContainer.className = 'secondary-content task-check-box';
+    checkContainer.innerHTML = `
+      <input type="checkbox" class="filled-in" />
+      <span></span>
+    `;
+
+    li.appendChild(checkContainer);
 
     // Add Delete Icon
-    const iconLink = document.createElement('a');
+    const iconLink = document.createElement('div');
     iconLink.className = 'delete-item secondary-content btn-floating waves-effect waves-light red';
     iconLink.style.width = '20px';
     iconLink.style.height = '20px';
@@ -96,7 +123,6 @@ function addTask(e) {
     li.appendChild(iconLink);
 
     taskList.appendChild(li);
-
     taskCount.textContent = `${+taskCount.textContent + 1}`;
 
     addDragDropEventListener(li);
@@ -110,6 +136,28 @@ function addTask(e) {
   e.preventDefault();
 }
 
+function toggleTaskStatus(e) {
+  if (e.target.parentElement.classList.contains('task-check-box')) {
+    const checkEl = e.target.parentElement.firstElementChild;
+    checkEl.checked = !checkEl.checked;
+
+    const taskTextEl = e.target.parentElement.previousSibling;
+    taskTextEl.classList.toggle('strike');
+
+    let tasks = getTasks();
+    const revisedTasks = tasks.map(taskObj => {
+      if (taskObj.task === taskTextEl.textContent.trim()) {
+        return { ...taskObj, done: !taskObj.done };
+      }
+      return taskObj;
+    });
+
+    localStorage.setItem('tasks', JSON.stringify(revisedTasks));
+  }
+
+  e.preventDefault();
+}
+
 function deleteTask(e) {
   if (e.target.parentElement.classList.contains('delete-item')) {
     if (confirm('Are you sure?')) {
@@ -117,7 +165,7 @@ function deleteTask(e) {
 
       const colItems = document.querySelectorAll('.collection-item');
       const taskIndex = Array.from(colItems).findIndex(
-        colItem => colItem.firstChild.textContent === taskEl.textContent
+        colItem => colItem.firstChild.textContent === taskEl.textContent.trim()
       );
 
       let tasks = getTasks();
@@ -155,7 +203,7 @@ function clearTask(e) {
   taskCount.textContent = 0;
 
   // Clear Tasks in LS
-  localStorage.clear();
+  localStorage.removeItem('tasks');
 
   e.preventDefault();
 }
@@ -163,7 +211,7 @@ function clearTask(e) {
 // get taskIndex
 function getTaskIndex(el) {
   const colItems = document.querySelectorAll('.collection-item');
-  const taskIndex = Array.from(colItems).findIndex(colItem => colItem.firstChild.textContent === el.textContent);
+  const taskIndex = Array.from(colItems).findIndex(colItem => colItem.firstChild.textContent === el.textContent.trim());
   return taskIndex;
 }
 

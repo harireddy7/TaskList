@@ -21,6 +21,23 @@
 		.drag-active {
 			background: #aaa !important;
 		}
+
+		.flex {
+			display: flex;
+			align-items: center;
+		}
+
+		.text-task {
+			flex: 1;
+		}
+
+		.task-check-box {
+			margin-top: 12px;
+		}
+
+		.strike {
+			text-decoration: line-through;
+		}
 	</style>
 
 </head>
@@ -32,7 +49,9 @@
 			<div class="col s12">
 				<div id="main" class="card">
 					<div class="card-content">
-						<div class="card-title">Task List</div>
+						<div class="card-title">
+							<h4>Task List</h4>
+						</div>
 						<form id="task-form">
 							<div class="row">
 								<div class="input-field col s12">
