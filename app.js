@@ -1,13 +1,13 @@
 const form = document.querySelector('#task-form');
+
 const taskList = document.querySelector('.collection');
-const clearBtn = document.querySelector('.clear-tasks');
-const filter = document.querySelector('#filter');
+
 const taskInput = document.querySelector('#task');
+const filter = document.querySelector('#filter');
 const taskCount = document.querySelector('.task-count');
+const clearBtn = document.querySelector('.clear-tasks');
 
-let dragStartIndex;
-
-// Load All event Listeners
+// LOAD EVENT LISTENERS
 function loadAllEventListeners() {
   document.addEventListener('DOMContentLoaded', loadTasks);
   form.addEventListener('submit', addTask);
@@ -17,16 +17,7 @@ function loadAllEventListeners() {
   filter.addEventListener('keyup', filterTask);
 }
 
-function addDragDropEventListener(listItem) {
-  // Drag Drop Events
-  listItem.addEventListener('dragstart', dragStart);
-  listItem.addEventListener('dragover', dragOver);
-  listItem.addEventListener('dragenter', dragEnter);
-  listItem.addEventListener('dragleave', dragLeave);
-  listItem.addEventListener('drop', dragDrop);
-}
-
-// Get tasks from LS
+// GET TASKS FROM LOCAL STORAGE
 function getTasks() {
   let tasks = [];
   if (localStorage.getItem('tasks') === null) {
@@ -34,10 +25,10 @@ function getTasks() {
   } else {
     tasks = JSON.parse(localStorage.getItem('tasks'));
   }
-
   return tasks;
 }
 
+// LOAD TASKS TO UI
 function loadTasks() {
   const tasks = getTasks();
 
@@ -46,8 +37,7 @@ function loadTasks() {
   tasks.forEach(taskObj => {
     // create Task Li Element
     const li = document.createElement('li');
-    li.className = 'collection-item draggable flex';
-    li.setAttribute('draggable', 'true');
+    li.className = 'collection-item flex';
 
     const textNodeEl = document.createElement('div');
     textNodeEl.className = `text-task ${taskObj.done && 'strike'}`;
@@ -76,11 +66,10 @@ function loadTasks() {
     li.appendChild(iconLink);
 
     taskList.appendChild(li);
-
-    addDragDropEventListener(li);
   });
 }
 
+// STORE TASK IN LOCAL STORAGE
 function storeTaskInLS(task) {
   const tasks = getTasks();
 
@@ -88,14 +77,14 @@ function storeTaskInLS(task) {
   localStorage.setItem('tasks', JSON.stringify(tasks));
 }
 
+// ADD TASK
 function addTask(e) {
   if (taskInput.value === '') {
     alert('Add a Task');
   } else {
     // create Task Li Element
     const li = document.createElement('li');
-    li.className = 'collection-item draggable flex';
-    li.setAttribute('draggable', true);
+    li.className = 'collection-item flex';
 
     const textNodeEl = document.createElement('div');
     textNodeEl.className = 'text-task';
@@ -122,10 +111,14 @@ function addTask(e) {
 
     li.appendChild(iconLink);
 
-    taskList.appendChild(li);
-    taskCount.textContent = `${+taskCount.textContent + 1}`;
+    const taskItems = document.querySelectorAll('.collection-item');
+    if (taskItems.length) {
+      taskList.insertBefore(li, taskItems[0]);
+    } else {
+      taskList.appendChild(li);
+    }
 
-    addDragDropEventListener(li);
+    taskCount.textContent = `${+taskCount.textContent + 1}`;
 
     storeTaskInLS(taskInput.value);
 
@@ -136,6 +129,7 @@ function addTask(e) {
   e.preventDefault();
 }
 
+// TOGGLE TASK STATUS
 function toggleTaskStatus(e) {
   if (e.target.parentElement.classList.contains('task-check-box')) {
     const checkEl = e.target.parentElement.firstElementChild;
@@ -158,13 +152,14 @@ function toggleTaskStatus(e) {
   e.preventDefault();
 }
 
+// DELETE TASK
 function deleteTask(e) {
   if (e.target.parentElement.classList.contains('delete-item')) {
     if (confirm('Are you sure?')) {
       const taskEl = e.target.parentElement.parentElement;
 
-      const colItems = document.querySelectorAll('.collection-item');
-      const taskIndex = Array.from(colItems).findIndex(
+      const taskItems = document.querySelectorAll('.collection-item');
+      const taskIndex = Array.from(taskItems).findIndex(
         colItem => colItem.firstChild.textContent === taskEl.textContent.trim()
       );
 
@@ -182,19 +177,22 @@ function deleteTask(e) {
   e.preventDefault();
 }
 
+// FILTER TASK
 function filterTask(e) {
   const filterTxt = e.target.value.toLowerCase();
-  const lis = document.querySelectorAll('.collection-item');
 
-  lis.forEach(li => {
+  const taskItems = document.querySelectorAll('.collection-item');
+  taskItems.forEach(li => {
     if (li.firstChild.textContent.toLowerCase().includes(filterTxt)) {
-      li.style.display = 'block';
+      li.style.display = 'flex';
     } else {
       li.style.display = 'none';
     }
   });
   e.preventDefault();
 }
+
+// CLEAR TASKS
 
 function clearTask(e) {
   while (taskList.firstChild) {
@@ -206,50 +204,6 @@ function clearTask(e) {
   localStorage.removeItem('tasks');
 
   e.preventDefault();
-}
-
-// get taskIndex
-function getTaskIndex(el) {
-  const colItems = document.querySelectorAll('.collection-item');
-  const taskIndex = Array.from(colItems).findIndex(colItem => colItem.firstChild.textContent === el.textContent.trim());
-  return taskIndex;
-}
-
-function dragStart(e) {
-  if (e.target.classList.contains('collection-item')) {
-    dragStartIndex = getTaskIndex(e.target);
-  }
-}
-
-function dragOver(e) {
-  e.preventDefault();
-}
-
-function dragEnter(e) {
-  e.target.classList.add('drag-active');
-}
-
-function dragLeave(e) {
-  e.target.classList.remove('drag-active');
-}
-
-function dragDrop(e) {
-  const dropIndex = getTaskIndex(e.target);
-  if (dragStartIndex == dropIndex) {
-    return;
-  }
-  const taskEls = document.querySelectorAll('.collection-item');
-  const startEl = taskEls[dragStartIndex];
-
-  // console.log(dragStartIndex, dropIndex);
-
-  e.target.classList.remove('drag-active');
-  taskList.removeChild(startEl);
-  if (dropIndex === taskEls.length - 1) {
-    taskEls[dropIndex].insertAdjacentElement('afterend', startEl);
-  } else {
-    taskEls[dropIndex].insertAdjacentElement('beforebegin', startEl);
-  }
 }
 
 // Load All EventsListeners
